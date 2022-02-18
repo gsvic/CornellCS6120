@@ -1,0 +1,12 @@
+b1:
+  in:  ∅
+  out: a, cond
+left:
+  in:  a, cond
+  out: a, cond
+right:
+  in:  a, cond
+  out: a, c, cond
+end:
+  in:  a, c, cond
+  out: a, c, cond

@@ -1,4 +1,5 @@
 import functools
+import sys
 
 from pybril.PyBril import PyBril
 from util import split_in_blocks
@@ -122,7 +123,7 @@ def worklist(blocks, merge, transfer, inverse=False):
     return (output, input) if inverse else (input, output)
 
 
-def write_to_stdout(input, output):
+def write_to_stdout(input, output, var_names_only=True):
     """
     Formats and prints the inputs/outputs per block
     :param input: The input list
@@ -130,8 +131,14 @@ def write_to_stdout(input, output):
     :return: None
     """
     for block in blocks:
-        in_items = sorted(input[block.get_name()].items())
-        out_items = sorted(output[block.get_name()].items())
+        if var_names_only:
+            in_items = sorted(input[block.get_name()].keys())
+            out_items = sorted(output[block.get_name()].keys())
+        else:
+            in_items = sorted(input[block.get_name()].items())
+            in_items = list(map(lambda x: "{}: {}".format(x[0], x[1]), in_items))
+            out_items = sorted(output[block.get_name()].items())
+            out_items = list(map(lambda x: "{}: {}".format(x[0], x[1]), out_items))
 
         if not in_items:
             in_items = "∅"
@@ -152,19 +159,19 @@ methods = {
     "defined": {
         "merge": union,
         "transfer": lambda block, y: dict(block.get_annotated_definitions(), **y),
-        "output": lambda x: [pair[0] for pair in x],
+        "output": lambda input, output: write_to_stdout(input, output, var_names_only=True),
         "inverse": False
     },
     "live": {
         "merge": union,
         "transfer": lambda block, y: transfer_live(block, y),
-        "output": lambda x: [pair[0] for pair in x],
+        "output": lambda input, output: write_to_stdout(input, output, var_names_only=True),
         "inverse": True
     },
     "cprop": {
         "merge": cprop_union,
         "transfer": lambda block, y: cprop_transfer(block.get_block().get_full_definitions(), y),
-        "output": lambda x: ["{}:{}".format(pair[0], pair[1]) for pair in x],
+        "output": lambda input, output: write_to_stdout(input, output, var_names_only=False),
         "inverse": False
     }
 }
@@ -172,7 +179,7 @@ methods = {
 
 if __name__ == "__main__":
     BRIL_BINARIES = "/Users/victorgiannakouris/Dev/bril/.venv/bin"
-    some_bril = "./test/fact.bril"  # sys.argv[1]
+    some_bril = sys.argv[1]
     brilpy = PyBril(bril_binaries_path=BRIL_BINARIES)
     code = brilpy.bril2json(some_bril)
 
@@ -180,11 +187,12 @@ if __name__ == "__main__":
     blocks = split_in_blocks(code["functions"][0])
     blocks = add_terminators(blocks)
 
-    method = "cprop"
+    m = sys.argv[2]
+    method = methods[m]
 
     input, output = worklist(blocks,
-                             merge=methods[method]["merge"],
-                             transfer=methods[method]["transfer"],
-                             inverse=methods[method]["inverse"])
+                             merge=method["merge"],
+                             transfer=method["transfer"],
+                             inverse=method["inverse"])
 
-    write_to_stdout(input, output)
+    method["output"](input, output)
