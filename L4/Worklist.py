@@ -1,7 +1,10 @@
+import functools
+
 from pybril.PyBril import PyBril
 from util import split_in_blocks
 from util import add_terminators
 from lib import CFG
+
 
 def union(dicts):
     """
@@ -16,8 +19,42 @@ def union(dicts):
 
     return result
 
+def cprop_union(dicts):
+    result = dict()
+
+    for d in dicts:
+        for key in d:
+            if key not in result:
+                result[key] = d[key]
+            else:
+                if d[key] != result[key]:
+                    result[key] = "?"
+
+    return result
+
+def cprop_transfer(block, merged):
+    result = dict()
+
+    for k in block:
+        result[k] = block[k]
+
+    for key in merged:
+        if key not in result:
+            result[key] = merged[key]
+        else:
+            if merged[key] != result[key]:
+                result[key] = "?"
+
+    return result
+
 
 def transfer_live(block, inputs):
+    """
+    Transfer method for the live variables
+    :param block: The input block
+    :param inputs: The inputs to the block
+    :return: The output
+    """
     used_vars = uses(block.get_block())
     used_vars = dict(zip(used_vars, range(0, len(used_vars))))
 
@@ -66,8 +103,7 @@ def worklist(blocks, merge, transfer, inverse=False):
     nodes = list(cfg.nodes.values())
 
     while nodes:
-        current = nodes[0]
-        nodes.remove(current)
+        current = nodes.pop(0)
 
         # Merge the inputs from all incoming edges
         input_values = [output[p] for p in current.get_predecessors()]
@@ -86,6 +122,32 @@ def worklist(blocks, merge, transfer, inverse=False):
     return (output, input) if inverse else (input, output)
 
 
+def write_to_stdout(input, output):
+    """
+    Formats and prints the inputs/outputs per block
+    :param input: The input list
+    :param output: The output list
+    :return: None
+    """
+    for block in blocks:
+        in_items = sorted(input[block.get_name()].items())
+        out_items = sorted(output[block.get_name()].items())
+
+        if not in_items:
+            in_items = "∅"
+        else:
+            in_items = functools.reduce(lambda x, y: "{}, {}".format(x, y), in_items)
+
+        if not out_items:
+            out_items = "∅"
+        else:
+            out_items = functools.reduce(lambda x, y: "{}, {}".format(x, y), out_items)
+
+        print(str(block.get_name()) + ":")
+        print("  in:  " + str(in_items))
+        print("  out: " + str(out_items))
+
+
 methods = {
     "defined": {
         "merge": union,
@@ -100,9 +162,10 @@ methods = {
         "inverse": True
     },
     "cprop": {
-        "merge": union,
-        "transfer": lambda x, y: union([x, y]),
-        "output": lambda x: ["{}:{}".format(pair[0], pair[1]) for pair in x]
+        "merge": cprop_union,
+        "transfer": lambda block, y: cprop_transfer(block.get_block().get_full_definitions(), y),
+        "output": lambda x: ["{}:{}".format(pair[0], pair[1]) for pair in x],
+        "inverse": False
     }
 }
 
@@ -117,17 +180,11 @@ if __name__ == "__main__":
     blocks = split_in_blocks(code["functions"][0])
     blocks = add_terminators(blocks)
 
-    method = "defined"
+    method = "cprop"
 
     input, output = worklist(blocks,
                              merge=methods[method]["merge"],
                              transfer=methods[method]["transfer"],
                              inverse=methods[method]["inverse"])
 
-    for block in blocks:
-        in_items = sorted(input[block.get_name()].items())
-        out_items = sorted(output[block.get_name()].items())
-
-        print(str(block.get_name()) + ":")
-        print("  In:  " + str(methods[method]["output"](in_items)))
-        print("  Out: " + str(methods[method]["output"](out_items)))
+    write_to_stdout(input, output)

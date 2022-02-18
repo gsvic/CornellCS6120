@@ -30,6 +30,21 @@ class Block:
 
         return definitions
 
+    def get_full_definitions(self):
+        """
+        Extracts the definitions of the instruction list, along with their values
+        :return: The block definitions
+        """
+        definitions = dict()
+        for instr in self._instr_list:
+            if 'dest' in instr:
+                if 'value' in instr:
+                    definitions[instr['dest']] = instr['value']
+                else:
+                    definitions[instr['dest']] = "?"
+
+        return definitions
+
     def get_uses(self):
         """
         Extracts all uses from the input block
