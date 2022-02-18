@@ -1,13 +1,16 @@
 class BlockCFGNode:
-    def __init__(self, block):
+    def __init__(self, block, annotations):
         """
         The BlockCFGNode class represents a node of the CFG graph
         that connects the blocks.
         :param block: The Block instance
+        :param annotations: The annotated definitions, in case of the same variable
+        defined multiple times.
         """
         self._block = block
         self._predecessors = {}
         self._successors = {}
+        self._annotations = annotations
 
     def add_predecessor(self, predecessor):
         """
@@ -96,6 +99,14 @@ class BlockCFGNode:
             outputs.add(d)
 
         return outputs
+
+    def get_annotated_definitions(self):
+        return self._annotations
+
+    def switch_direction(self):
+        tmp = self._predecessors
+        self._predecessors = self._successors
+        self._successors = tmp
 
     def __str__(self):
         return "BlockCFGNode[block_name={}]".format(self._block.get_block_name())
