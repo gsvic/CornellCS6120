@@ -1,5 +1,7 @@
 from lib import Block
 
+TERMINATORS = {"jmp", "br", "ret"}
+
 
 def split_in_blocks(input):
     """
@@ -8,16 +10,37 @@ def split_in_blocks(input):
     :return: A list of blocks
     """
     blocks = []
-    current_block_instr = []
+    current_block = []
 
     for instr in input['instrs']:
-        if 'label' in instr:
-            blocks.append(Block(current_block_instr))
-            current_block_instr = []
+        if 'op' in instr:
+            current_block.append(instr)
+            if instr['op'] in TERMINATORS:
+                blocks.append(Block(current_block))
+                current_block = []
+        else:
+            if current_block:
+                blocks.append(Block(current_block))
+            current_block = [instr]
 
-        current_block_instr.append(instr)
+    if current_block:
+        blocks.append(Block(current_block))
 
-    if current_block_instr:
-        blocks.append(Block(current_block_instr))
+    return blocks
+
+
+def add_terminators(blocks):
+    n_blocks = len(blocks)
+
+    for idx, block in enumerate(blocks):
+        instructions = block.get_instr_list()
+        if idx == n_blocks - 1:
+            if 'op' not in instructions[-1] or instructions[-1]['op'] not in TERMINATORS:
+                block.add_instr({'op': 'ret', 'args': []})
+        else:
+            if 'op' not in instructions[-1] or instructions[-1]['op'] not in TERMINATORS:
+                next_block = blocks[idx + 1]
+                block.add_instr({'op': 'jmp', 'labels': [next_block.get_block_name()]})
+                print()
 
     return blocks

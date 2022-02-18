@@ -48,11 +48,25 @@ class Block:
         """
         return self._name
 
+    def get_name(self):
+        """
+        :return: The block name
+        """
+        return self._name
+
     def get_instr_list(self):
         """
         :return: The instruction list
         """
         return self._instr_list
+
+    def add_instr(self, instr):
+        """
+        Appends a new instruction to the instruction list
+        :param instr: The new instruction
+        :return: None
+        """
+        self._instr_list.append(instr)
 
     def __str__(self):
         return "Block[{}]".format(self._name)
