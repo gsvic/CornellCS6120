@@ -1,5 +1,5 @@
 class Block:
-    block_id = 0
+    block_id = 1
 
     def __init__(self, instr_list):
         """
@@ -15,7 +15,7 @@ class Block:
                 if 'label' in instr:
                     self._name = instr['label']
                 else:
-                    self._name = "{}".format(Block.block_id)
+                    self._name = "b{}".format(Block.block_id)
                     Block.block_id += 1
 
     def get_definitions(self):
