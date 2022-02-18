@@ -30,6 +30,12 @@ def split_in_blocks(input):
 
 
 def add_terminators(blocks):
+    """
+    Adds terminators to the input blocks, in case there is no strict connection between
+    two blocks, or, and ending instruction (e.g. `ret`urtn)
+    :param blocks:
+    :return:
+    """
     n_blocks = len(blocks)
 
     for idx, block in enumerate(blocks):
