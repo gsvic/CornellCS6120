@@ -1,0 +1,10 @@
+
+b1:
+  in:  ∅
+  out: i, one, zero
+top:
+  in:  cond, i, one, zero
+  out: cond, i, one, zero
+end:
+  in:  cond, i, one, zero
+  out: cond, i, one, zero

@@ -1,0 +1,1 @@
+command = "PYTHONPATH=$(pwd)/../.. python3 ../Worklist.py {filename} defined"

@@ -1,0 +1,11 @@
+@main {
+  one: int = const 1;
+  zero: int = const 0;
+  i: int = const 5;
+.top:
+  print i;
+  cond: bool = eq i zero;
+  i: int = sub i one;
+  br cond .end .top;
+.end:
+}
