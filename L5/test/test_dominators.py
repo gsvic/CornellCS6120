@@ -1,0 +1,18 @@
+import os
+import json
+
+from L5.Dominators import find_dominators
+from pathlib import Path
+
+
+def test_dominators():
+    wd = Path(__file__).resolve().parent
+
+    bril_files = list(filter(lambda x: x.endswith(".bril"), os.listdir(os.path.join(wd, "resources", "dominators"))))
+
+    for bril in bril_files:
+        doms = find_dominators(os.path.join(wd, "resources", "dominators", bril))
+        out = json.loads(open(os.path.join(wd, "resources", "dominators", bril.split(".bril")[0] + ".out")).read())
+
+        for dom in doms:
+            assert set(doms[dom]) == set(out[dom])
