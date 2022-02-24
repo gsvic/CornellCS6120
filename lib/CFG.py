@@ -60,6 +60,10 @@ class CFG:
             node[1].switch_direction()
 
     def get_dominators(self):
+        """
+        Returns the a dict with the dominators per node
+        :return: The dominators dict
+        """
         if self.dominators:
             return self.dominators
 
@@ -89,6 +93,31 @@ class CFG:
         self.dominators = dom
 
         return dom
+
+    def get_immediate_dominators(self):
+        """
+        Returns a dict with the immediate dominatees of each node.
+        :return: The immediate dominators dict
+        """
+
+        # 1. Get the dominators
+        dominators = self.get_dominators()
+
+        # 2. Init an empty list per node
+        immediate_dominators = {node: list() for node in self.nodes}
+
+        for node in self.nodes:
+            node_dominators = dominators[node]
+
+            for nd in node_dominators:
+                preds = self.nodes[node].get_predecessors()
+
+                # If the dominator (nd) is a direct predecessor of the node,
+                # add the node to the nd`s immediate dominantees list.
+                if nd in preds:
+                    immediate_dominators[nd].append(node)
+
+        return immediate_dominators
 
     def __set_graph_edges(self, block_list):
         """
