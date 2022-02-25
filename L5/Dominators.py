@@ -1,4 +1,6 @@
 import json
+import fileinput
+import sys
 
 from pybril.PyBril import PyBril
 from util import split_in_blocks
@@ -8,12 +10,8 @@ from lib import CFG
 import functools
 
 
-def find_dominators(input):
-    BRIL_BINARIES = "/Users/victorgiannakouris/Dev/bril/.venv/bin"
-
-    brilpy = PyBril(bril_binaries_path=BRIL_BINARIES)
-
-    code = brilpy.bril2json(input)
+def find_dominators(json_input):
+    code = json.loads(json_input)
 
     for function in code["functions"]:
         blocks = split_in_blocks(function)
@@ -23,12 +21,8 @@ def find_dominators(input):
 
         return cfg.get_dominators()
 
-def get_dominators_tree(input):
-    BRIL_BINARIES = "/Users/victorgiannakouris/Dev/bril/.venv/bin"
-
-    brilpy = PyBril(bril_binaries_path=BRIL_BINARIES)
-
-    code = brilpy.bril2json(input)
+def get_dominators_tree(json_input):
+    code = json.loads(json_input)
 
     for function in code["functions"]:
         blocks = split_in_blocks(function)
@@ -38,12 +32,8 @@ def get_dominators_tree(input):
 
         return cfg.get_immediate_dominators()
 
-def get_dominaton_frontiers(input):
-    BRIL_BINARIES = "/Users/victorgiannakouris/Dev/bril/.venv/bin"
-
-    brilpy = PyBril(bril_binaries_path=BRIL_BINARIES)
-
-    code = brilpy.bril2json(input)
+def get_dominaton_frontiers(json_input):
+    code = json.loads(json_input)
 
     for function in code["functions"]:
         blocks = split_in_blocks(function)
@@ -53,4 +43,16 @@ def get_dominaton_frontiers(input):
 
         return cfg.get_domination_frontiers()
 
-print(json.dumps(get_dominaton_frontiers("/Users/victorgiannakouris/Dev/CornellCS6120/L5/test/resources/frontiers/loopcond-front.bril"), indent=4))
+
+if __name__ == "__main__":
+    input_json = sys.stdin.read()
+
+    stdout = None
+    if len(sys.argv) == 1 or sys.argv[1] == "dom":
+        stdout = find_dominators(input_json)
+    elif sys.argv[1] == "front":
+        stdout = get_dominaton_frontiers(input_json)
+    elif sys.argv[1] == "domtree":
+        stdout = get_dominaton_frontiers(input_json)
+
+    print(json.dumps(stdout, indent=2))
