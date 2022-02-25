@@ -162,6 +162,43 @@ class CFG:
 
         return frontiers
 
+    def check_dominator(self, root, block, dominated_by, path=list(), seen=set()):
+        """
+        Given a starting point (the root), checks if the given `block` is dominated by the
+        block defined as `dominated_by`
+        :param root: The node to start
+        :param block: The block to check
+        :param dominated_by: The potential dominator
+        :param path: The path followed until now
+        :param seen: Nodes we've seen so far
+        :return: Ture if it is dominated, False otherwise
+        """
+        seen.add(root)
+        path.append(root)
+
+        ans = True
+
+        if root == block:
+            print("Found! " + str(path))
+            if dominated_by in path:
+                return True
+            else:
+                return False
+        elif root == "exit":
+            print("Not found..")
+            return None
+
+        curr = self.nodes[root]
+
+        for node in curr.get_successors():
+            if node not in seen or node == block:
+                new = self.check_dominator(node, block, dominated_by, [p for p in path], seen)
+                if new is not None:
+                    ans = ans and new
+
+        return ans
+
+
     def __set_graph_edges(self, block_list):
         """
         Given a block list, it sets the edges between the BlockCFGNodes

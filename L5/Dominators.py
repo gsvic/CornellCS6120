@@ -43,6 +43,16 @@ def get_dominaton_frontiers(json_input):
 
         return cfg.get_domination_frontiers()
 
+def paths(json_input):
+    code = json.loads(json_input)
+
+    for function in code["functions"]:
+        blocks = split_in_blocks(function)
+        blocks = add_terminators(blocks)
+
+        cfg = CFG(blocks, add_entry_block=True)
+
+        return cfg.check_dominator(root="entry", block="endif", dominated_by="then")
 
 if __name__ == "__main__":
     input_json = sys.stdin.read()
