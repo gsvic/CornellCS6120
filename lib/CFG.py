@@ -94,6 +94,17 @@ class CFG:
 
         return dom
 
+    def get_dominatees(self):
+        doms = self.get_dominators()
+
+        dominatees = {d: list() for d in doms}
+
+        for node, dominators in doms.items():
+            for dominator in dominators:
+                dominatees[dominator].append(node)
+
+        return dominatees
+
     def get_immediate_dominators(self):
         """
         Returns a dict with the immediate dominatees of each node.
@@ -118,6 +129,38 @@ class CFG:
                     immediate_dominators[nd].append(node)
 
         return immediate_dominators
+
+    def get_domination_frontiers(self):
+        """
+        Returns a dict with the immediate dominatees of each node.
+        :return: The immediate dominators dict
+        """
+
+        # 1. Get the dominators
+        dominators = self.get_dominators()
+
+        # 2. A dict that contains the nodes and the nodes that each node dominates
+        # in the form {"node" : list(dominatee1, dominatee2, ...,dominateeN)}
+        dominatees = self.get_dominatees()
+
+        # 2. Init an empty frontier list per node
+        frontiers = {node: list() for node in self.nodes}
+
+        for node in dominators:
+            dominates = dominatees[node]
+
+            # Iterate through all the bloks that node dominates
+            for dominatee in dominates:
+
+                # Get the successors
+                succ = self.nodes[dominatee].get_successors()
+                for s in succ:
+                    # If the successor is not dominated by the node belongs to its domination frontier.
+                    if s not in dominates or s == node:
+                        frontiers[node].append(s)
+
+
+        return frontiers
 
     def __set_graph_edges(self, block_list):
         """
