@@ -47,6 +47,5 @@ def add_terminators(blocks):
             if 'op' not in instructions[-1] or instructions[-1]['op'] not in TERMINATORS:
                 next_block = blocks[idx + 1]
                 block.add_instr({'op': 'jmp', 'labels': [next_block.get_block_name()]})
-                print()
 
     return blocks

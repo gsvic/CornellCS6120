@@ -85,3 +85,13 @@ class Block:
 
     def __str__(self):
         return "Block[{}]".format(self._name)
+
+    @staticmethod
+    def create_entry_block(idx, next_block):
+        instr = [
+            {'label': 'entry%s' % idx},
+            {'jmp': next_block}
+        ]
+
+        return Block(instr)
+
