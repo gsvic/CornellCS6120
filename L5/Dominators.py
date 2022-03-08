@@ -1,13 +1,9 @@
 import json
-import fileinput
 import sys
 
-from pybril.PyBril import PyBril
 from util import split_in_blocks
 from util import add_terminators
 from lib import CFG
-
-import functools
 
 
 def find_dominators(json_input):
@@ -42,6 +38,7 @@ def get_dominaton_frontiers(json_input):
         cfg = CFG(blocks, add_entry_block=True)
 
         return cfg.get_domination_frontiers()
+
 
 def paths(json_input):
     code = json.loads(json_input)

@@ -1,5 +1,8 @@
+from .Definition import Definition
+
 class Block:
     block_id = 1
+    var_id = 1
 
     def __init__(self, instr_list):
         """
@@ -9,6 +12,7 @@ class Block:
         """
         self._instr_list = instr_list
         self._name = None
+        self.definitions = []
 
         for instr in instr_list:
             if not self._name:
@@ -18,7 +22,22 @@ class Block:
                     self._name = "b{}".format(Block.block_id)
                     Block.block_id += 1
 
+            if 'dest' in instr:
+                name = instr['dest']
+                value = "?"
+                uid = Block.var_id
+                Block.var_id += 1
+
+                if 'value' in instr:
+                    value = instr['value']
+
+                self.definitions.append(Definition(name, value, uid))
+
+
     def get_definitions(self):
+        return self.definitions
+
+    def get_definition_names(self):
         """
         Extracts the definitions of the instruction list
         :return: The block definitions
