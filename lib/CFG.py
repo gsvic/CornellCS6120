@@ -105,6 +105,13 @@ class CFG:
 
         return dominatees
 
+    def get_dom_tree(self):
+        doms = self.get_dominatees().items()
+
+        doms = {d[0]: [a for a in d[1] if a is not d[0]] for d in doms}
+
+        return doms
+
     def get_immediate_dominators(self):
         """
         Returns a dict with the immediate dominatees of each node.
