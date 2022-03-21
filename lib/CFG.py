@@ -19,7 +19,7 @@ class CFG:
         # Instantiate a BlockCFGNode per block
         for block in block_list:
             # Get the current definitions and annotate them
-            annotated_defs = self.__annotate_definitions(block.get_definitions())
+            annotated_defs = self.__annotate_definitions(block.get_definition_names())
             self.nodes[block.get_block_name()] = BlockCFGNode(block, annotated_defs)
 
         # Create the edges
@@ -36,7 +36,7 @@ class CFG:
         first_node = list(self.nodes.items())[0][1]
         if len(first_node.get_predecessors()) > 0:
             entry_block = Block.create_entry_block(self.get_next_entry_idx(), first_node.get_name())
-            entry_node = BlockCFGNode(entry_block, self.__annotate_definitions(entry_block.get_definitions()))
+            entry_node = BlockCFGNode(entry_block, self.__annotate_definitions(entry_block.get_definition_names()))
             first_node.add_predecessor(entry_node)
             new_nodes = {entry_node.get_name(): entry_node}
             new_nodes.update(self.nodes)
@@ -104,6 +104,13 @@ class CFG:
                 dominatees[dominator].append(node)
 
         return dominatees
+
+    def get_dom_tree(self):
+        doms = self.get_dominatees().items()
+
+        doms = {d[0]: [a for a in d[1] if a is not d[0]] for d in doms}
+
+        return doms
 
     def get_immediate_dominators(self):
         """

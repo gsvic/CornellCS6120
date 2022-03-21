@@ -95,7 +95,7 @@ class BlockCFGNode:
         """
         outputs = self._get_inputs(seen)
 
-        for d in self._block.get_definitions():
+        for d in self._block.get_definition_names():
             outputs.add(d)
 
         return outputs
