@@ -22,6 +22,12 @@ class Block:
                     self._name = "b{}".format(Block.block_id)
                     Block.block_id += 1
 
+        self.set_instructions(instr_list)
+
+    def set_instructions(self, instr_list):
+        self.definitions = []
+
+        for instr in instr_list:
             if 'dest' in instr:
                 name = instr['dest']
                 value = "?"
@@ -33,6 +39,7 @@ class Block:
 
                 self.definitions.append(Definition(name, value, uid))
 
+        self._instr_list = instr_list
 
     def get_definitions(self):
         return self.definitions
