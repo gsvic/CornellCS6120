@@ -4,12 +4,14 @@ import z3
 # A language based on a Lark example from:
 # https://github.com/lark-parser/lark/wiki/Examples
 GRAMMAR = """
-?start: set
-  | set "union"        set -> union
-  | set "intersect"    set -> intersect
+?start: item
+  | item "union"        item -> union
+  | item "intersect"    item -> intersect
 ?item: set
+?element: NUMBER        -> num
   | CNAME               -> var
-set  : "{" [NUMBER ("," NUMBER)*] "}"
+    
+set  : "{" [element ("," element)*] "}"
 
 %import common.NUMBER
 %import common.WS
@@ -30,9 +32,9 @@ def interp(tree, lookup):
         lhs = interp(tree.children[0], lookup)
         rhs = interp(tree.children[1], lookup)
         if op == 'union':
-            return lhs.union(rhs)
+            return z3.SetUnion(lhs, rhs)
         elif op == 'intersect':
-            return lhs.intersection(rhs)
+            return z3.SetIntersect(lhs, rhs)
     elif op == 'neg':  # Negation.
         sub = interp(tree.children[0], lookup)
         return -sub
@@ -40,8 +42,12 @@ def interp(tree, lookup):
         return int(tree.children[0])
     elif op == 'var':  # Variable lookup.
         return lookup(tree.children[0])
-    else:
-        return set(tree.children)
+    elif op == 'set':
+        s = z3.EmptySet(z3.IntSort())
+        for token in tree.children:
+            val = interp(token, lookup)
+            s = z3.SetAdd(s, val)
+        return s
 
 
 def pretty(tree, subst={}, paren=False):
@@ -59,31 +65,22 @@ def pretty(tree, subst={}, paren=False):
             return s
 
     op = tree.data
-    if op in ('add', 'sub', 'mul', 'div', 'shl', 'shr'):
+    if op in ('intersect', 'union'):
         lhs = pretty(tree.children[0], subst, True)
         rhs = pretty(tree.children[1], subst, True)
         c = {
-            'add': '+',
-            'sub': '-',
-            'mul': '*',
-            'div': '/',
-            'shl': '<<',
-            'shr': '>>',
+            'intersect': 'intersect',
+            'union': 'union',
         }[op]
         return par('{} {} {}'.format(lhs, c, rhs))
-    elif op == 'neg':
-        sub = pretty(tree.children[0], subst)
-        return '-{}'.format(sub, True)
     elif op == 'num':
         return tree.children[0]
     elif op == 'var':
         name = tree.children[0]
         return str(subst.get(name, name))
-    elif op == 'if':
-        cond = pretty(tree.children[0], subst)
-        true = pretty(tree.children[1], subst)
-        false = pretty(tree.children[2], subst)
-        return par('{} ? {} : {}'.format(cond, true, false))
+    elif op == 'set':
+        r = set([pretty(t, subst) for t in tree.children])
+        return r
 
 
 def run(tree, env):
@@ -151,10 +148,11 @@ def synthesize(tree1, tree2):
                   if not k.startswith('h')}
 
     # Formulate the constraint for Z3.
-    goal = z3.ForAll(
-        list(plain_vars.values()),  # For every valuation of variables...
-        expr1 == expr2,  # ...the two expressions produce equal results.
-    )
+    # goal = z3.ForAll(
+    #     list(plain_vars.values()),  # For every valuation of variables...
+    #     expr1 == expr2,  # ...the two expressions produce equal results.
+    # )
+    goal = expr1 == expr2
 
     # Solve the constraint.
     return solve(goal)
@@ -174,6 +172,15 @@ def ex2(source):
 parser = lark.Lark(GRAMMAR)
 
 
-tree1 = parser.parse("{1, 4} union {9}")
+tree1 = parser.parse("{2, 5}")
+tree2 = parser.parse("{2, h5, 6} intersect {h1, h2, h}")
 
-print(z3_expr(tree1))
+# print(tree1)
+# print(tree2)
+
+model = synthesize(tree1, tree2)
+
+print(model)
+
+print(pretty(tree1))
+print(pretty(tree2, model_values(model)))
