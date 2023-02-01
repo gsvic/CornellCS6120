@@ -1,7 +1,9 @@
 from .BlockCFGNode import BlockCFGNode
 from .Block import Block
+from .Loop import Loop
 
 import functools
+
 
 class CFG:
     def __init__(self, block_list, add_entry_block=True):
@@ -10,6 +12,8 @@ class CFG:
         :param block_list: The block list
         """
         self.nodes = {}
+
+        self.__block_list = block_list
 
         # Keeps a global definition state (last annotation, or, id)
         self.__annotations = {}
@@ -31,6 +35,8 @@ class CFG:
 
         # Compute dominators lazily, upon request. Then cache the result (see get_dominators() method)
         self.dominators = None
+
+        self.__loops = dict()
 
     def add_entry_block(self):
         first_node = list(self.nodes.items())[0][1]
@@ -169,8 +175,38 @@ class CFG:
 
         return frontiers
 
+    def find_loops(self):
+        return self.__find_loops(root=self.nodes[self.__block_list[0].get_name()], path=list())
+
+    def __find_loops(self, root, path=list()):
+        """
+        Detects loops.
+        :param root: The (current) root node.
+        :param path: Includes the block names included in the loop.
+        :return: The loops (if any)
+        """
+        loops = dict()
+
+        path.append(root.get_name())
+        for succ in root.get_successors():
+            if succ not in path:
+                loops_found = self.__find_loops(self.nodes[succ], path)
+                loops.update(loops_found)
+            else:
+                if succ in self.get_dominators()[root.get_name()]:
+                    # Found a loop
+                    #
+                    # Get all the blocks starting from the succ block (start of the loop)
+                    blocks = [self.nodes[blk_name].get_block() for blk_name in path[path.index(succ):]]
+                    loop = Loop(blocks)
+                    loops[blocks[0].get_name()] = loop
+
+        return loops
+
     def check_dominator(self, root, block, dominated_by, path=list(), seen=set()):
         """
+        --- Helper method ---
+
         Given a starting point (the root), checks if the given `block` is dominated by the
         block defined as `dominated_by`
         :param root: The node to start
